@@ -32,7 +32,7 @@ int main() {
 	displayIntro();
 
 	std::string sourceFolder = getString("Enter folder with source images: ");
-	std::string destFolder = getString("Enter folder for destination images: ");
+	std::string destFolder = getString("Enter folder for destination images (creates folder if it doesn't exist): ");
 	sf::Uint16 padX = getInt("Enter padding in X direction (0 if none): ");
 	sf::Uint16 padY = getInt("Enter padding in Y direction (0 if none): ");
 	sf::Uint16 width = getInt("Enter width of split images: ");
