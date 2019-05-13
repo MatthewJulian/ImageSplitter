@@ -16,7 +16,9 @@ std::string getString(const std::string& prompt);
 
 sf::Uint16 getInt(const std::string& prompt);
 
-void crop(const sf::Image& sourceImage, sf::Uint16 left, sf::Uint16 top, sf::Uint16 width, sf::Uint16 height, const std::string& filename);
+bool crop(const sf::Image& sourceImage, sf::Uint16 left, sf::Uint16 top, sf::Uint16 width, sf::Uint16 height, const std::string& filename);
+
+bool isTransparent(const sf::Image& img);
 
 void split(const std::string& sourceFilename, const std::string& destFolder, sf::Uint16 padX, sf::Uint16 padY, sf::Uint16 width, sf::Uint16 height);
 
@@ -43,6 +45,7 @@ int main() {
 
 	splitFiles(sourceFolder, destFolder, padX, padY, width, height);
 
+	system("pause");
 	return EXIT_SUCCESS;
 }
 
@@ -79,15 +82,32 @@ sf::Uint16 getInt(const std::string& prompt) {
 }
 
 
-void crop(const sf::Image& sourceImage, sf::Uint16 left, sf::Uint16 top, sf::Uint16 width, sf::Uint16 height, const std::string& filename) {
+bool crop(const sf::Image& sourceImage, sf::Uint16 left, sf::Uint16 top, sf::Uint16 width, sf::Uint16 height, const std::string& filename) {
 	const sf::IntRect sourceRect(left, top, width, height);
 
 	sf::Image imagePart;
 	imagePart.create(width, height, sf::Color::Transparent);
 	imagePart.copy(sourceImage, 0, 0, sourceRect, true);
-
-	if (imagePart.saveToFile(filename))
+	if (isTransparent(imagePart)) {
+		return false;
+	} else if (imagePart.saveToFile(filename)) {
 		std::cout << "Saved image to " << filename << '.' << std::endl;
+		return true;
+	} else {
+		return false;
+	}
+
+}
+
+
+bool isTransparent(const sf::Image& img) {
+	const sf::Uint8* const colorData = img.getPixelsPtr();
+	const unsigned int colorsSize = img.getSize().x * img.getSize().y * 4;
+
+	if (std::none_of(colorData, colorData + colorsSize, [](int i) { return i != 0; }))
+		return true;
+	else
+		return false;
 }
 
 
@@ -107,9 +127,9 @@ void split(const std::string& sourceFilename, const std::string& destFolder, sf:
 
 		for (sf::Uint16 col = 0; col < columns; ++col) {
 			std::string destFilename = createFilename(sourceFilename, destFolder, numberLength, fileNumber);
-			crop(sourceImage, offsetX + (col * width), offsetY + (row * height), width, height, destFilename);
 			offsetX += 2 * padX;
-			fileNumber++;
+			if (crop(sourceImage, offsetX + (col * width), offsetY + (row * height), width, height, destFilename))
+				fileNumber++;
 		}
 		offsetY += 2 * padY;
 	}
